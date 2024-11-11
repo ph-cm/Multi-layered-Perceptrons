@@ -112,3 +112,19 @@ def cross_ent(prediction, ground_truth):
     t = 1 if ground_truth > 0.5 else 0
     return -t * np.log(prediction) - (1 - t) * np.log(1 - prediction)
 plot_cross_ent()
+
+class CrossEntropyLoss:
+    def forward(self,p,y):
+        self.p = p
+        self.y = Y
+        p_of_y = p[np.arange(len(y)), y]
+        log_prob = np.log(p_of_y)
+        return -log_prob.mean()
+cross_ent_loss = CrossEntropyLoss()
+p = softmax.forward(net.forward(train_x[0:10]))
+cross_ent_loss.forward(p, train_labels[0:10])
+
+z = net.forward(train_x[0:10])
+p = softmax.forward(z)
+loss = cross_ent_loss.forward(p, train_labels[0:10])
+print(loss)
