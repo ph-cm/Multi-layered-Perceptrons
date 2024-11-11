@@ -33,3 +33,28 @@ plt.show()
     
 print(train_x[:5])
 print(train_labels[:5])
+
+#loss function for regression
+#helper function for plotting various loss functions
+
+def plot_loss_functions(suptitle, functions, ylabels, xlabel):
+    fig, ax = plt.subplots(1, len(functions), figsize=(9, 3))
+    plt.subplots_adjust(bottom=0.2, wspace=0.4)
+    fig.suptitle(suptitle)
+    for i, fun in enumerate(functions):
+        ax[i].set_xlabel(xlabel)
+        if len(ylabels) > i:
+            ax[i].set_ylabel(ylabels[i])
+        ax[i].plot(x, fun)
+    plt.show()
+    
+x = np.linspace(-2, 2, 101)
+plot_loss_functions(
+    subtitle = 'Common loss functions for regresion',
+    functions = [np.abs(x), np.power(x, 2)],
+    ylabels = ['$\mathcal{L}_{abs}}$ (absolute loss)', '$\mathcal{L}_{sq}$ (squared loss)'],
+    xlabel = '$y - f(x_i)$'
+)
+
+
+    
