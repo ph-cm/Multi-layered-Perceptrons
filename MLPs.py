@@ -52,7 +52,7 @@ x = np.linspace(-2, 2, 101)
 plot_loss_functions(
     suptitle = 'Common loss functions for regresion',
     functions = [np.abs(x), np.power(x, 2)],
-    ylabels = ['$\mathcal{L}_{abs}}$ (absolute loss)', '$\mathcal{L}_{sq}$ (squared loss)'],
+    ylabels = [r'$\mathcal{L}_{abs}$ (absolute loss)', r'$\mathcal{L}_{sq}$ (squared loss)'],
     xlabel = '$y - f(x_i)$'
 )
 
@@ -71,7 +71,7 @@ def logistic_loss(fx):
 plot_loss_functions(
     suptitle = 'Common loss functions for classification (class = 1)',
     functions = [zero_one_v(x), logistic_loss(x)],
-    ylabels =  ['$\mathcal{L}_{0-1}}$ (0-1 loss)', '$\mathcal{L}_{log}$ (logistic loss)'],
+    ylabels = [r'$\mathcal{L}_{0-1}$ (0-1 loss)', r'$\mathcal{L}_{log}$ (logistic loss)'],
     xlabel = '$p$'
 )
 
