@@ -86,3 +86,13 @@ class Linear:
 net = Linear(2, 2)
 net.forward(train_x[0:5])
     
+#Softmax turning outputs into probabilities
+class Softmax:
+    def forward(self,z):
+        zmax = z.max(axis=1, keepdims=True)
+        expz = np.exp(z-zmax)
+        Z = expz.sum(axis=1, keepdims=True)
+        return expz / Z
+softmax = Softmax()
+softmax.forward(net.forward(train_x[0:10]))
+
