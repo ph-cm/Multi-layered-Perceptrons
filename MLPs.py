@@ -154,20 +154,23 @@ class Linear:
         self.b -= lr*self.db
 
 class Softmax:
-    def forwar(self,z):
+    def forward(self,z):
         self.z = z
         zmax = z.max(axis = 1, keepdims = True)
         expz = np.exp(z - zmax)
         Z = expz.sum(axis = 1, keepdims = True)
         return expz / Z
     def backward(self, dp):
-        p = self.forwar(self.z)
+        p = self.forward(self.z)
         pdp =p * dp
         return pdp - p * pdp.sum(axis = 1, keepdims = True)
+    
 class CrossEntropyLoss:
     def forward(self,p,y):
         self.p = p
-        self.y = Y
+        self.y = y
+        print("Shape of self.p:", self.p.shape)  # Debugging: Check shape of probabilities
+        print("Values in self.y:", self.y)
         p_of_y = p[np.arange(len(y)), y]
         log_prob = np.log(p_of_y)
         return -log_prob.mean()
@@ -175,3 +178,34 @@ class CrossEntropyLoss:
         dlog_softmax = np.zeros_like(self.p)
         dlog_softmax[np.arange(len(self.y)), self.y] -= 1.0/len(self.y)
         return dlog_softmax / self.p
+
+#Training the Model
+lin = Linear(2,2)
+softmax = Softmax()
+cross_ent_loss = CrossEntropyLoss()
+
+learning_rate = 0.1
+
+pred = np.argmax(lin.forward(train_x),axis=1)
+acc = (pred==train_labels).mean()
+print("Initial accuracy: ",acc)
+
+batch_size=4
+for i in range(0,len(train_x),batch_size):
+    xb = train_x[i:i+batch_size]
+    yb = train_labels[i:i+batch_size]
+    
+    # forward pass
+    z = lin.forward(xb)
+    p = softmax.forward(z)
+    loss = cross_ent_loss.forward(p,yb)
+    
+    # backward pass
+    dp = cross_ent_loss.backward(loss)
+    dz = softmax.backward(dp)
+    dx = lin.backward(dz)
+    lin.update(learning_rate)
+    
+pred = np.argmax(lin.forward(train_x),axis=1)
+acc = (pred==train_labels).mean()
+print("Final accuracy: ",acc)
