@@ -390,3 +390,20 @@ net.add(Linear(2,2))
 net.add(Softmax())
 
 res = train_and_plot(30,net,lr=0.005)
+
+#Multi-Layered Models
+class Tanh:
+    def forward(self,x):
+        y = np.tanh(x)
+        self.y = y
+        return y
+    def backward(self,dy):
+        return(1.0-self.y**2)*dy
+net = Net()
+net.add(Linear(2,10))
+net.add(Tanh())
+net.add(Linear(10,2))
+net.add(Softmax())
+loss = CrossEntropyLoss()
+
+res = train_and_plot(30, net, lr=0.01)
