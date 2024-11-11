@@ -74,4 +74,15 @@ plot_loss_functions(
     ylabels =  ['$\mathcal{L}_{0-1}}$ (0-1 loss)', '$\mathcal{L}_{log}$ (logistic loss)'],
     xlabel = '$p$'
 )
+
+#Neural Network Architecture
+class Linear:
+    def __init__(self, nin, nout):
+        self.W = np.random.normal(0, 1.0/np.sqrt(nin), (nout, nin))
+        self.b = np.zeros((1, nout))
+    def forward(self, x):
+        return np.dot(x, self.W.T) + self.b
+    
+net = Linear(2, 2)
+net.forward(train_x[0:5])
     
