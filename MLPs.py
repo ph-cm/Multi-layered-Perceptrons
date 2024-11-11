@@ -96,3 +96,19 @@ class Softmax:
 softmax = Softmax()
 softmax.forward(net.forward(train_x[0:10]))
 
+#Cross Entropy Loss
+def plot_cross_ent():
+    p = np.linspace(0.01, 0.99, 101) #estimated probability p(y/x)
+    cross_ent_v = np.vectorize(cross_ent)
+    f3, ax = plt.subplots(1, 1, figsize = (8, 3))
+    l1, = plt.plot(p, cross_ent_v(p, 1), 'r--')
+    l2, = plt.plot(p, cross_ent_v(p, 0), 'r-')
+    plt.legend([l1, l2], ['$y = 1$', '$y = 0$'], loc = 'upper center', ncol = 2)
+    plt.xlabel(r'$\hat{p}(y|x)$', size = 18)
+    plt.ylabel(r'$\mathcal{L}_{CE}$', size = 18)
+    plt.show()
+    
+def cross_ent(prediction, ground_truth):
+    t = 1 if ground_truth > 0.5 else 0
+    return -t * np.log(prediction) - (1 - t) * np.log(1 - prediction)
+plot_cross_ent()
