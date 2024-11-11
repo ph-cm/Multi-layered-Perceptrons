@@ -209,3 +209,56 @@ for i in range(0,len(train_x),batch_size):
 pred = np.argmax(lin.forward(train_x),axis=1)
 acc = (pred==train_labels).mean()
 print("Final accuracy: ",acc)
+
+#Network Class
+class Net:
+    def __init__(self):
+        self.layers = []
+    
+    def add(self, l):
+        self.layers.append(l)
+    
+    def forward(self, x):
+        for l in self.layers:
+            x = l.forward(x)
+        return x
+    
+    def backward(self, z):
+        for l in self.layers[::-1]:
+            z = l.backward(z)
+        return z
+    
+    def update(self, lr):
+        for l in self.layers:
+            if 'update' in l.__dir__():
+                l.update(lr)
+
+net = Net()
+net.add(Linear(2,2))
+net.add(Softmax())
+loss = CrossEntropyLoss()
+
+def get_loss_acc(x,y,loss=CrossEntropyLoss()):
+    p = net.forward(x)
+    l = loss.forward(p,y)
+    pred = np.argmax(p,axis=1)
+    acc = (pred==y).mean()
+    return l,acc
+
+print("Initial loss={}, accuracy={} ".format(*get_loss_acc(train_x,train_labels)))
+
+def train_epoch(net, train_x, train_labels, loss=CrossEntropyLoss(), batch_size=4, lr=0.1):
+    for i in range(0,len(train_x), batch_size):
+        xb = train_x[i:i+batch_size]
+        yb = train_labels[i:i+batch_size]
+        
+        p = net.forward(xb)
+        l = loss.forward(p, yb)
+        dp = loss.backward(l)
+        dx = net.backward(dp)
+        net.update(lr)
+
+train_epoch(net,train_x,train_labels)
+
+print("Final loss={}, accuracy={}: ".format(*get_loss_acc(train_x, train_labels)))
+print("Test loss ={}, accuracy={}: ".format(*get_loss_acc(test_x, test_labels)))
