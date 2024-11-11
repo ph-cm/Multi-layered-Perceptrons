@@ -47,14 +47,31 @@ def plot_loss_functions(suptitle, functions, ylabels, xlabel):
             ax[i].set_ylabel(ylabels[i])
         ax[i].plot(x, fun)
     plt.show()
-    
+
 x = np.linspace(-2, 2, 101)
 plot_loss_functions(
-    subtitle = 'Common loss functions for regresion',
+    suptitle = 'Common loss functions for regresion',
     functions = [np.abs(x), np.power(x, 2)],
     ylabels = ['$\mathcal{L}_{abs}}$ (absolute loss)', '$\mathcal{L}_{sq}$ (squared loss)'],
     xlabel = '$y - f(x_i)$'
 )
 
+#loss function for classification
+x = np.linspace(0, 1, 100)
+def zero_one(d):
+    if d < 0.5:
+        return 0
+    return 1
+zero_one_v = np.vectorize(zero_one)
 
+def logistic_loss(fx):
+    #assume y == 1
+    return -np.log(fx)
+
+plot_loss_functions(
+    suptitle = 'Common loss functions for classification (class = 1)',
+    functions = [zero_one_v(x), logistic_loss(x)],
+    ylabels =  ['$\mathcal{L}_{0-1}}$ (0-1 loss)', '$\mathcal{L}_{log}$ (logistic loss)'],
+    xlabel = '$p$'
+)
     
