@@ -5,6 +5,8 @@ import numpy as np
 #you can generate anothers seeds
 np.random.seed(0)
 import random
+import matplotlib.cm as cm
+
 
 #making sample dataset with two parameters
 n = 100
@@ -262,3 +264,127 @@ train_epoch(net,train_x,train_labels)
 
 print("Final loss={}, accuracy={}: ".format(*get_loss_acc(train_x, train_labels)))
 print("Test loss ={}, accuracy={}: ".format(*get_loss_acc(test_x, test_labels)))
+
+#Plotting the Training Process
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+def plot_decision_boundary(net, train_x, train_labels, fig, ax):
+    ax.clear()
+    
+    # Gera a grade de contorno
+    x_min, x_max = train_x[:, 0].min() - 1, train_x[:, 0].max() + 1
+    y_min, y_max = train_x[:, 1].min() - 1, train_x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.1))
+    
+    # Prepara os pontos da grade para a predição
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    predictions = net.forward(grid_points)
+    
+    # Calcula a probabilidade para a classe 1 (caso binário)
+    if predictions.shape[1] == 2:
+        Z = predictions[:, 1].reshape(xx.shape)
+    else:
+        Z = predictions.argmax(axis=1).reshape(xx.shape)
+    
+    # Desenha o contorno de probabilidade
+    levels = np.linspace(0, 1, 40)
+    cs = ax.contourf(xx, yy, Z, alpha=0.7, levels=levels, cmap='viridis')
+    fig.colorbar(cs, ax=ax, ticks=[0, 0.5, 1])
+
+    # Mapa de cores para os pontos de treino
+    c_map = [cm.coolwarm(x) for x in np.linspace(0.0, 1.0, len(set(train_labels)))]
+    colors = [c_map[label] for label in train_labels]
+    ax.scatter(train_x[:, 0], train_x[:, 1], c=colors, edgecolors='k', s=50, alpha=0.8)
+
+    fig.canvas.draw()
+    plt.pause(0.01)
+
+def train_and_plot(n_epoch, net, loss=CrossEntropyLoss(), batch_size=4, lr=0.01):
+    fig, ax = plt.subplots(2, 1, figsize=(10, 8))
+    ax[0].set_xlim(0, n_epoch + 1)
+    ax[0].set_ylim(0, 1)
+
+    train_acc = np.empty((n_epoch, 3))
+    train_acc[:] = np.NAN
+    valid_acc = np.empty((n_epoch, 3))
+    valid_acc[:] = np.NAN
+
+    plt.ion()
+
+    for epoch in range(1, n_epoch + 1):
+        # Treina a rede para a época atual
+        train_epoch(net, train_x, train_labels, loss, batch_size, lr)
+        
+        # Calcula a perda e acurácia para o conjunto de treinamento
+        tloss, taccuracy = get_loss_acc(train_x, train_labels, loss)
+        train_acc[epoch - 1, :] = [epoch, tloss, taccuracy]
+        
+        # Calcula a perda e acurácia para o conjunto de validação
+        vloss, vaccuracy = get_loss_acc(test_x, test_labels, loss)
+        valid_acc[epoch - 1, :] = [epoch, vloss, vaccuracy]
+
+        ax[0].set_ylim(0, max(max(train_acc[:, 2]), max(valid_acc[:, 2])) * 1.1)
+
+        # Atualiza o gráfico de progresso do treinamento
+        plot_training_progress(train_acc[:, 0], (train_acc[:, 2], valid_acc[:, 2]), fig, ax[0])
+        
+        # Atualiza o gráfico da fronteira de decisão
+        plot_decision_boundary(net, fig, ax[1])
+        
+        fig.canvas.draw()
+        plt.pause(0.01)
+
+    plt.ioff()
+    plt.show()
+    return train_acc, valid_acc
+
+def plot_training_progress(x, y_data, fig, ax):
+    ax.clear()
+    styles = ['k--', 'g-']
+    for i, y in enumerate(y_data):
+        ax.plot(x, y, styles[i])
+    ax.legend(['training accuracy', 'validation accuracy'], loc='upper left')
+
+def plot_decision_boundary(net, fig, ax):
+    draw_colorbar = True
+    # remove previous plot
+    ax.clear()
+
+    # generate countour grid
+    x_min, x_max = train_x[:, 0].min() - 1, train_x[:, 0].max() + 1
+    y_min, y_max = train_x[:, 1].min() - 1, train_x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                         np.arange(y_min, y_max, 0.1))
+    grid_points = np.c_[xx.ravel().astype('float32'), yy.ravel().astype('float32')]
+    n_classes = max(train_labels)+1
+    while train_x.shape[1] > grid_points.shape[1]:
+        # pad dimensions (plot only the first two)
+        grid_points = np.c_[grid_points,
+                            np.empty(len(xx.ravel())).astype('float32')]
+        grid_points[:, -1].fill(train_x[:, grid_points.shape[1]-1].mean())
+
+    # evaluate predictions
+    prediction = np.array(net.forward(grid_points))
+    # for two classes: prediction difference
+    if (n_classes == 2):
+        Z = np.array([0.5+(p[0]-p[1])/2.0 for p in prediction]).reshape(xx.shape)
+    else:
+        Z = np.array([p.argsort()[-1]/float(n_classes-1) for p in prediction]).reshape(xx.shape)
+    
+    # draw contour
+    levels = np.linspace(0, 1, 40)
+    cs = ax.contourf(xx, yy, Z, alpha=0.4, levels = levels)
+    if draw_colorbar:
+        fig.colorbar(cs, ax=ax, ticks = [0, 0.5, 1])
+    c_map = [cm.jet(x) for x in np.linspace(0.0, 1.0, n_classes) ]
+    colors = [c_map[l] for l in train_labels]
+    ax.scatter(train_x[:, 0], train_x[:, 1], marker='o', c=colors, s=60, alpha = 0.5)
+
+# Função de treinamento e plotagem
+net = Net()
+net.add(Linear(2,2))
+net.add(Softmax())
+
+res = train_and_plot(30,net,lr=0.005)
