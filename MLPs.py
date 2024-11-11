@@ -331,7 +331,9 @@ def train_and_plot(n_epoch, net, loss=CrossEntropyLoss(), batch_size=4, lr=0.01)
         plot_training_progress(train_acc[:, 0], (train_acc[:, 2], valid_acc[:, 2]), fig, ax[0])
         
         # Atualiza o gráfico da fronteira de decisão
-        plot_decision_boundary(net, fig, ax[1])
+        # Durante o treinamento
+        plot_decision_boundary(net, train_x, train_labels, fig, ax[1], draw_colorbar=True)
+
         
         fig.canvas.draw()
         plt.pause(0.01)
@@ -347,40 +349,40 @@ def plot_training_progress(x, y_data, fig, ax):
         ax.plot(x, y, styles[i])
     ax.legend(['training accuracy', 'validation accuracy'], loc='upper left')
 
-def plot_decision_boundary(net, fig, ax):
-    draw_colorbar = True
-    # remove previous plot
-    ax.clear()
+def plot_decision_boundary(net, train_x, train_labels, fig, ax, draw_colorbar=False):
+    ax.clear()  # Limpa apenas o contorno sem sobrepor os pontos
 
-    # generate countour grid
+    # Gera a grade de contorno
     x_min, x_max = train_x[:, 0].min() - 1, train_x[:, 0].max() + 1
     y_min, y_max = train_x[:, 1].min() - 1, train_x[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
-                         np.arange(y_min, y_max, 0.1))
-    grid_points = np.c_[xx.ravel().astype('float32'), yy.ravel().astype('float32')]
-    n_classes = max(train_labels)+1
-    while train_x.shape[1] > grid_points.shape[1]:
-        # pad dimensions (plot only the first two)
-        grid_points = np.c_[grid_points,
-                            np.empty(len(xx.ravel())).astype('float32')]
-        grid_points[:, -1].fill(train_x[:, grid_points.shape[1]-1].mean())
-
-    # evaluate predictions
-    prediction = np.array(net.forward(grid_points))
-    # for two classes: prediction difference
-    if (n_classes == 2):
-        Z = np.array([0.5+(p[0]-p[1])/2.0 for p in prediction]).reshape(xx.shape)
-    else:
-        Z = np.array([p.argsort()[-1]/float(n_classes-1) for p in prediction]).reshape(xx.shape)
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.05), np.arange(y_min, y_max, 0.05))
     
-    # draw contour
+    # Prepara os pontos da grade para a predição
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    predictions = net.forward(grid_points)
+
+    # Calcula a probabilidade para a classe 1 (caso binário)
+    if predictions.shape[1] == 2:
+        Z = predictions[:, 1].reshape(xx.shape)
+    else:
+        Z = predictions.argmax(axis=1).reshape(xx.shape)
+    
+    # Desenha o contorno de probabilidade apenas uma vez
     levels = np.linspace(0, 1, 40)
-    cs = ax.contourf(xx, yy, Z, alpha=0.4, levels = levels)
-    if draw_colorbar:
-        fig.colorbar(cs, ax=ax, ticks = [0, 0.5, 1])
-    c_map = [cm.jet(x) for x in np.linspace(0.0, 1.0, n_classes) ]
-    colors = [c_map[l] for l in train_labels]
-    ax.scatter(train_x[:, 0], train_x[:, 1], marker='o', c=colors, s=60, alpha = 0.5)
+    cs = ax.contourf(xx, yy, Z, levels=levels, cmap='viridis', alpha=0.6)
+    
+    # Atualiza ou cria a barra de cor
+    if draw_colorbar and not hasattr(ax, 'colorbar'):
+        ax.colorbar = fig.colorbar(cs, ax=ax, ticks=[0, 0.5, 1])
+    
+    # Desenha os pontos de treino sem limpar a cada iteração
+    c_map = [cm.coolwarm(x) for x in np.linspace(0.0, 1.0, len(set(train_labels)))]
+    colors = [c_map[label] for label in train_labels]
+    ax.scatter(train_x[:, 0], train_x[:, 1], c=colors, edgecolors='k', s=50, alpha=0.8)
+
+    fig.canvas.draw()
+    plt.pause(0.01)
+
 
 # Função de treinamento e plotagem
 net = Net()
